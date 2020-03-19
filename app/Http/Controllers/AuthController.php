@@ -15,10 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-
     public function register(Request $request)
     {
-        //validate incoming request
         $this->validate($request, [
             'first_name' => 'required|string',
             'last_name' => 'required|string',
@@ -27,7 +25,6 @@ class AuthController extends Controller
         ]);
 
         try {
-
             $user = new User;
             $user->first_name = $request->input('first_name');
             $user->last_name = $request->input('last_name');
@@ -39,25 +36,17 @@ class AuthController extends Controller
             $user->state_id = 1;
             $user->registered_at = date("Y-m-d H:i:s");
 
-
-
             $user->save();
-
-            //return successful response
-
-//            return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
             return Response\MyResponse::generateJson(
                 ResponseStatus::OK,
                 $user,
                 ErrorCode::OK,
                 ResponseStatusCode::OK
             );
-
         } catch (\Exception $e) {
-            //return error message
+            //todo: return error message
             return response()->json(['message' => $e], 409);
         }
-
     }
 
     public function login(Request $request)
@@ -107,9 +96,5 @@ class AuthController extends Controller
                 ResponseStatusCode::FAIL
             );
         }
-
-
     }
-
-
 }

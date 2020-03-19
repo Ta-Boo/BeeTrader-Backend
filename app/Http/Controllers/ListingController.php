@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Listing;
 use App\Response\ErrorCode;
 use App\Response\MyResponse;
 use App\Response\ResponseStatus;
 use App\Response\ResponseStatusCode;
 use Illuminate\Http\Request;
-use  App\User;
-use Illuminate\Support\Facades\Auth;
-use App\Response;
 use Illuminate\Support\Facades\DB;
 
 class ListingController extends Controller
@@ -26,21 +22,16 @@ class ListingController extends Controller
         $lat    = $request['lat'];
         $lon    = $request['lon'];
         $radius = $request['radius'];
-        $angle_radius = $radius / ( 111 * cos( $lat ) );
-
+        $angle_radius = $radius / (111 * cos($lat));
         $min_lat = $lat - $angle_radius;
         $max_lat = $lat + $angle_radius;
         $min_lon = $lon - $angle_radius;
         $max_lon = $lon + $angle_radius;
         $toBeSelected = 'title, price, seen, longitude,latitude, listing.id';
-//        $toBeSelected = '*';
         $query =  DB::select("select $toBeSelected from listing join user u on listing.user_id = u.id join address a on u.address_id = a.id
                                         WHERE latitude BETWEEN $min_lat AND $max_lat
                                                 AND longitude BETWEEN $min_lon AND $max_lon");
-//        $query = Listing::all()->join('user','listing.user_id','=','user.id');
-
         $result = [];
-
         foreach ($query as $listing) {
             $distance = $this->distanceBetween([$lat, $lon],[$listing->latitude,$listing->longitude]);
             if ($distance <= $radius) {

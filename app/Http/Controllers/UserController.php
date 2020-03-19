@@ -14,13 +14,13 @@ use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 
 class UserController extends  Controller {
 
     private $headers = ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'];
     private $options = JSON_UNESCAPED_UNICODE;
-
 
     public function __construct() {
 //        $this->middleware('auth');
@@ -33,9 +33,6 @@ class UserController extends  Controller {
             'iat' => time(),
             'exp' => null
         ];
-
-        // As you can see we are passing `JWT_SECRET` as the second parameter that will
-        // be used to decode the token in the future.
         return JWT::encode($payload, env('JWT_SECRET'));
     }
 
@@ -47,14 +44,11 @@ class UserController extends  Controller {
     {
         try {
             $user = User::findOrFail($id);
-
             return MyResponse::generateJson(ResponseStatus::OK,
                 $user,
                 ErrorCode::OK,
                 ResponseStatusCode::OK
                 );
-
-
         } catch (\Exception $e) {
             return MyResponse::generateJson(ResponseStatus::FAIL,
                 null,
@@ -64,14 +58,18 @@ class UserController extends  Controller {
         }
 
     }
-    public function updateUser(Request $request) {
+    public function getAvatar($id) {
+        $path = storage_path('app/public/avatars/'.$id.'.jpg');
+        return Response::download($path);
+    }
 
+    public function updateUser(Request $request) {
         if ($request->hasFile('image')) {
             $image = $request->file("image");
             $file = Storage::disk('avatars')->put($image->getFilename().'.jpg',  File::get($image));
-            return Storage::url();
+            return "Storage::url();"; //todo: dorobit
         } else {
-            return "nemame nic";
+            return "nemame nic"; //todo: dorobit
         }
     }
 
@@ -88,8 +86,6 @@ class UserController extends  Controller {
                 ErrorCode::OK,
                 ResponseStatusCode::OK
             );
-
-
         } catch (\Exception $e) {
             return MyResponse::generateJson(ResponseStatus::FAIL,
                 null,
@@ -97,16 +93,11 @@ class UserController extends  Controller {
                 ResponseStatusCode::FAIL
             );
         }
-
     }
-
 
     public function getUserAddress($id)
     {
-        $query  = DB::select("select * from address
-                                                    where id in (
-                                                        select address_id from user
-                                                            where id = $id)");
+        $query  = DB::select("select * from address where id in (select address_id from user where id = $id)");
         if ($query == null) {
             return MyResponse::generateJson(ResponseStatus::NO_DATA_FOUND,
                 $query,
@@ -118,8 +109,5 @@ class UserController extends  Controller {
                 ErrorCode::OK,
                 ResponseStatusCode::OK);
         }
-
-
     }
-
 }

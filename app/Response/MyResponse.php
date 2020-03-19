@@ -8,7 +8,8 @@ use PHPUnit\Util\Json;
 
 class MyResponse
 {
-    public static function generateJson($status, $data, $error_code, $status_code){
+    public static function
+    generateJson($status, $data, $error_code, $status_code){
         sleep(1.6);
         return response()->json([
             'status' => $status,

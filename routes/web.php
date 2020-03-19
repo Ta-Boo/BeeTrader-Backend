@@ -15,6 +15,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     $router->get('listings/inRadius',  ['uses' => 'ListingController@listingInRadius']);
 
+    $router->get('avatar/{id}',  ['uses' => 'UserController@getAvatar']);
+    $router->get('listings/inRadius',  ['uses' => 'ListingController@listingInRadius']);
+
 
     $router->get('users',  ['uses' => 'UserController@getUsers']);
     $router->post('user',  ['uses' => 'UserController@updateUser']);
