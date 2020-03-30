@@ -9,10 +9,11 @@
 Laravel Lumen is a stunningly fast PHP micro-framework for building web applications with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Lumen attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as routing, database abstraction, queueing, and caching.
 
 ## Requirements
-    - install xamp ( one of older versions)
-    - install php (i  use version 7.4.3)
+    - install xamp (7.2.28)
+    - install php (7.4.3)
     - run xamp (appache, sql server)
     - run laravel migrations : "php artisan migrate" from terminal (cd to repo)
+    - run server: " php -S localhost:8000 -t public"
     
     ... missing some steps
 
