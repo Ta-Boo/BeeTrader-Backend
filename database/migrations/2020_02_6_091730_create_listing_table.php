@@ -20,7 +20,7 @@ class CreateListingTable extends Migration
             $table->unsignedInteger('type_id');
 
             $table->string('title', 63);
-            $table->string('description', 255);
+            $table->string('description', 2255);
             $table->string('image', 255)->nullable();
             $table->unsignedInteger('price');
 
