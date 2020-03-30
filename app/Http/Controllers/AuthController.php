@@ -69,7 +69,7 @@ class AuthController extends Controller
         $result = User::where('email',$request["email"])->join('address','user.address_id','=', 'address.id')->first(['first_name',
             'last_name', 'email', 'latitude',
             'longitude','phone_number',
-            'name', 'postal_code']);
+            'name', 'postal_code','image', 'user.id']);
         $result->token = 'bearer '.$token;
         return MyResponse::generateJson(
             ResponseStatus::OK,

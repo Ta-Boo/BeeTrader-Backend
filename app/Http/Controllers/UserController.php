@@ -3,7 +3,6 @@
 
 namespace App\Http\Controllers;
 
-//use Validator;
 use App\Response\ErrorCode;
 use App\Response\MyResponse;
 use App\Response\ResponseStatus;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class UserController extends  Controller {
 
@@ -64,25 +64,35 @@ class UserController extends  Controller {
     }
 
     public function updateUser(Request $request) {
+        $this->validate($request, [
+            'first_name' => 'string',
+            'last_name' => 'string',
+            'address_id' => 'int',
+            'phone_number' => 'string',
+            'email' => 'string',
+            'id' => 'required'
+        ]);
+        $result = "";
+        $requestData = array_filter($request->all());
+
         if ($request->hasFile('image')) {
             $image = $request->file("image");
-            $file = Storage::disk('avatars')->put($image->getFilename().'.jpg',  File::get($image));
-            return "Storage::url();"; //todo: dorobit
-        } else {
-            return "nemame nic"; //todo: dorobit
+            $fileName = $image->getFilename();
+            Storage::disk('avatars')->put($request['id'].'.jpg', File::get($image));
+            $requestData['image'] = 'api/avatar/'.$request['id'];
         }
+        User::where('id',$request->id)->update($requestData);
     }
 
 
     public function getUserByEmail(Request $request) {
         try {
-            $email = $request['email'];
-            $user =  User::where('email',$email)->first();
-            $userData = $user->first(['id','first_name', 'last_name', 'email', 'phone_number','image']);
-            $address = Address::find($user->address_id)->first(['id','name','postal_code']);
-            $userData->address =$address;
+            $result = User::where('email',$request["email"])->join('address','user.address_id','=', 'address.id')->first(['first_name',
+                'last_name', 'email', 'latitude',
+                'longitude','phone_number',
+                'name', 'postal_code', 'image', 'user.id']);
             return MyResponse::generateJson(ResponseStatus::OK,
-                $userData,
+                $result,
                 ErrorCode::OK,
                 ResponseStatusCode::OK
             );

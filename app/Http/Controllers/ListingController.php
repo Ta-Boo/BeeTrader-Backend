@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Listing;
 use App\Response\ErrorCode;
 use App\Response\MyResponse;
 use App\Response\ResponseStatus;
 use App\Response\ResponseStatusCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 
 class ListingController extends Controller
 {
 
-    public function listingInRadius(Request $request)
-    {
+    public function listingInRadius(Request $request) {
         $this->validate($request, [
             'radius' => 'required|integer',
             'lat' => 'required',
             'lon' => 'required'
         ]);
+
         $lat    = $request['lat'];
         $lon    = $request['lon'];
         $radius = $request['radius'];
@@ -27,10 +29,25 @@ class ListingController extends Controller
         $max_lat = $lat + $angle_radius;
         $min_lon = $lon - $angle_radius;
         $max_lon = $lon + $angle_radius;
-        $toBeSelected = 'title, price, seen, longitude,latitude, listing.id';
-        $query =  DB::select("select $toBeSelected from listing join user u on listing.user_id = u.id join address a on u.address_id = a.id
-                                        WHERE latitude BETWEEN $min_lat AND $max_lat
-                                                AND longitude BETWEEN $min_lon AND $max_lon");
+
+        [$min_lon,$max_lon] = $this->swapIfNeeded($min_lon,$max_lon);
+        [$min_lat,$max_lat] = $this->swapIfNeeded($min_lat,$max_lat);
+
+        $toBeSelected = ['title','price','seen','longitude','latitude','listing.id','listing.image','type_id'];
+
+        $query = DB::table('listing')
+            ->join('user','user.id','=','listing.user_id')
+            ->join('address','user.address_id','=','address.id');
+
+        if ($request->has('categories')) {
+            foreach ($request->categories as $key => $value) {
+                $query->orWhere('type_id','=',$value);
+            }
+        }
+        $query = $query->whereBetween('latitude',[$min_lat,$max_lat])
+            ->whereBetween('longitude',[$min_lon,$max_lon])
+            ->paginate(20,$toBeSelected,'page',1);
+
         $result = [];
         foreach ($query as $listing) {
             $distance = $this->distanceBetween([$lat, $lon],[$listing->latitude,$listing->longitude]);
@@ -48,6 +65,32 @@ class ListingController extends Controller
             ResponseStatusCode::OK);
     }
 
+    function categories(Request $request) {
+
+        return MyResponse::generateJson(ResponseStatus::OK,
+            DB::table('listing_type')->get(['type','id']),
+            ErrorCode::OK,
+            ResponseStatusCode::OK);
+    }
+
+    public function listingById(Request $request) {
+        $toBeSelected = ['listing.id', 'user_id', 'title', 'description', 'listing.image', 'price', 'seen', 'is_in', 'first_name', 'email','phone_number'];
+        $result = Listing::where('listing.id','=',$request['id'])
+            ->join('user','listing.user_id','=','user.id')
+            ->join('address','address_id', '=', "address.id")
+            ->first($toBeSelected);
+        $result['id'] = $request['id'];
+        return MyResponse::generateJson(ResponseStatus::OK,
+            $result,
+            ErrorCode::OK,
+            ResponseStatusCode::OK);
+    }
+    public function listingPreview($id) {
+        $path = storage_path('app/public/listings/'.$id.'.jpg');
+        return Response::download($path);
+    }
+
+
     public function distanceBetween($from,$to) {
         $r = 6371e3;
         $alpha1 = $this->toRads($from[0]);
@@ -61,5 +104,15 @@ class ListingController extends Controller
     }
     public function toRads($double) {
         return $double * pi() /180;
+    }
+
+    private function swapIfNeeded($a, $b) {
+        $placeHolder = 0;
+        if($a > $b) {
+            $placeHolder = $a;
+            $a = $b;
+            $b = $placeHolder;
+        }
+        return [$a,$b];
     }
 }
