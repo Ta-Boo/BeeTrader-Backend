@@ -7,18 +7,25 @@ use App\Response\ErrorCode;
 use App\Response\MyResponse;
 use App\Response\ResponseStatus;
 use App\Response\ResponseStatusCode;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 
 class ListingController extends Controller
 {
+    public function __construct() {
+        $this->middleware('auth');
+    }
 
     public function listingInRadius(Request $request) {
         $this->validate($request, [
             'radius' => 'required|integer',
             'lat' => 'required',
-            'lon' => 'required'
+            'lon' => 'required',
+            'page' => 'required'
         ]);
 
         $lat    = $request['lat'];
@@ -46,7 +53,8 @@ class ListingController extends Controller
         }
         $query = $query->whereBetween('latitude',[$min_lat,$max_lat])
             ->whereBetween('longitude',[$min_lon,$max_lon])
-            ->paginate(20,$toBeSelected,'page',1);
+            ->paginate(8,$toBeSelected,'page',$request->page
+            );
 
         $result = [];
         foreach ($query as $listing) {
@@ -65,7 +73,7 @@ class ListingController extends Controller
             ResponseStatusCode::OK);
     }
 
-    function categories(Request $request) {
+    function categories() {
 
         return MyResponse::generateJson(ResponseStatus::OK,
             DB::table('listing_type')->get(['type','id']),
@@ -85,9 +93,50 @@ class ListingController extends Controller
             ErrorCode::OK,
             ResponseStatusCode::OK);
     }
+
     public function listingPreview($id) {
         $path = storage_path('app/public/listings/'.$id.'.jpg');
         return Response::download($path);
+    }
+
+    function uploadListing(Request $request) {
+//        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|int',
+            'state_id' => 'required|string',
+            'type_id' => 'required|int',
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'price' => 'required|int',
+        ]);
+
+        if ($validator->fails()) {
+            return MyResponse::generateJson(
+                ResponseStatus::VALIDATION_FAIL,
+                null,
+                ErrorCode::FAIL,
+                ResponseStatusCode::FAIL);
+        }
+        if($request->hasFile('image')) {
+            $listing = new Listing();
+            $listing->user_id = $request->user_id;
+            $listing->state_id = $request->state_id;
+            $listing->type_id = $request->type_id;
+            $listing->title = $request->title;
+            $listing->description = $request->description;
+            $listing->price = $request->price;
+            $listing->save();
+            $image = $request->file("image");
+            Storage::disk('listings')->put($listing->id .'.jpg', File::get($image));
+            $listing->image = 'listingPreview/'. $listing->id;
+            $listing->save();
+        } else {
+            return MyResponse::generateJson(
+                ResponseStatus::FAIL,
+                null,
+                ErrorCode::FAIL,
+                ResponseStatusCode::FAIL);
+        }
     }
 
 

@@ -2,6 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Response\ErrorCode;
+use App\Response\MyResponse;
+use App\Response\ResponseStatus;
+use App\Response\ResponseStatusCode;
 use Closure;
 use Illuminate\Contracts\Auth\Factory as Auth;
 
@@ -36,7 +40,12 @@ class Authenticate
     public function handle($request, Closure $next, $guard = null)
     {
         if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
+            return MyResponse::generateJson(
+                ResponseStatus::UNAUTHORIZED,
+                null,
+                ErrorCode::UNAUTHORIZED,
+                ResponseStatusCode::UNAUTHORIZED
+            );
         }
 
         return $next($request);

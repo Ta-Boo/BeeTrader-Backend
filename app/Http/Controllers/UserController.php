@@ -23,7 +23,7 @@ class UserController extends  Controller {
     private $options = JSON_UNESCAPED_UNICODE;
 
     public function __construct() {
-//        $this->middleware('auth');
+        $this->middleware('auth');
     }
 
     protected function jwt(User $user) {
@@ -77,9 +77,8 @@ class UserController extends  Controller {
 
         if ($request->hasFile('image')) {
             $image = $request->file("image");
-            $fileName = $image->getFilename();
             Storage::disk('avatars')->put($request['id'].'.jpg', File::get($image));
-            $requestData['image'] = 'api/avatar/'.$request['id'];
+            $requestData['image'] = 'avatar/'.$request['id'];
         }
         User::where('id',$request->id)->update($requestData);
     }

@@ -13,14 +13,15 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('login', 'AuthController@login');
     $router->post('logout', 'AuthController@logout');
 
+    $router->get('categories',  ['uses' => 'ListingController@categories']);
 
 
     $router->get('listings/inRadius',  ['uses' => 'ListingController@listingInRadius']);
     $router->get('listingPreview/{id}',  ['uses' => 'ListingController@listingPreview']);
-
     $router->get('listings/inRadius',  ['uses' => 'ListingController@listingInRadius']);
-    $router->get('categories',  ['uses' => 'ListingController@categories']);
     $router->get('listing',  ['uses' => 'ListingController@listingById']);
+    $router->post('listing',  ['uses' => 'ListingController@uploadListing']);
+
 
     $router->get('addresses',  ['uses' => 'AddressController@addresses']);
 

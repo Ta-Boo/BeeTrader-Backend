@@ -22,20 +22,20 @@ class MyResponse
 }
 
 abstract class ResponseStatus  {
-
     const OK = "Success";
     const FAIL = "Failed";
     const NO_DATA_FOUND = "No data found";
+    const VALIDATION_FAIL = "Validation failed";
+    const UNAUTHORIZED = "Unauthorized attempt";
 }
 
 abstract class ResponseStatusCode  {
-
     const OK = 200;
     const FAIL = 401;
+    const UNAUTHORIZED = 403;
     const CONFLICT = 409;
 }
 abstract class ErrorCode  {
-
     const OK = 1000;
     const FAIL = -1000;
     const NO_DATA_FOUND = -1001;
