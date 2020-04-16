@@ -45,7 +45,13 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             //todo: return error message
-            return response()->json(['message' => $e], 409);
+
+            return MyResponse::generateJson(
+                ResponseStatus::FAIL,
+                null,
+                ErrorCode::FAIL,
+                ResponseStatusCode::FAIL
+            );
         }
     }
 
