@@ -22,10 +22,10 @@ class CreateUserTable extends Migration
             $table->string('last_name',30);
             $table->integer('is_admin');
             $table->string('email',45)->unique();
-            $table->string('phone_number',15);
+            $table->string('phone_number',15)->nullable();
             $table->string('image')->nullable();
             $table->date('registered_at');
-            $table->string('password');
+            $table->string('password',255);
 
             $table->foreign('address_id')
                 ->references('id')

@@ -40,7 +40,7 @@ class ListingController extends Controller
         [$min_lon,$max_lon] = $this->swapIfNeeded($min_lon,$max_lon);
         [$min_lat,$max_lat] = $this->swapIfNeeded($min_lat,$max_lat);
 
-        $toBeSelected = ['title','price','seen','longitude','latitude','listing.id','listing.image','type_id'];
+        $toBeSelected = ['title','price','seen','longitude','latitude','listing.id','listing.image','type_id','email'];
 
         $query = DB::table('listing')
             ->join('user','user.id','=','listing.user_id')
@@ -51,8 +51,13 @@ class ListingController extends Controller
                 $query->orWhere('type_id','=',$value);
             }
         }
+        if ($request->text != "") {
+            $query = $query->where('description', 'like','%'.$request->text.'%')
+            ->orWhere('title','like','%'.$request->text.'%');
+        }
         $query = $query->whereBetween('latitude',[$min_lat,$max_lat])
             ->whereBetween('longitude',[$min_lon,$max_lon])
+            ->orderBy('id','desc')
             ->paginate(8,$toBeSelected,'page',$request->page
             );
 
@@ -82,12 +87,16 @@ class ListingController extends Controller
     }
 
     public function listingById(Request $request) {
-        $toBeSelected = ['listing.id', 'user_id', 'title', 'description', 'listing.image', 'price', 'seen', 'is_in', 'first_name', 'email','phone_number'];
+        $toBeSelected = ['listing.id', 'user_id', 'title', 'description', 'listing.image', 'price', 'seen',
+            'is_in', 'first_name', 'email','phone_number','listing.type_id'];
         $result = Listing::where('listing.id','=',$request['id'])
             ->join('user','listing.user_id','=','user.id')
             ->join('address','address_id', '=', "address.id")
             ->first($toBeSelected);
         $result['id'] = $request['id'];
+        $listing = Listing::find($request->id);
+        $listing->seen += 1;
+        $listing->save();
         return MyResponse::generateJson(ResponseStatus::OK,
             $result,
             ErrorCode::OK,
@@ -130,6 +139,11 @@ class ListingController extends Controller
             Storage::disk('listings')->put($listing->id .'.jpg', File::get($image));
             $listing->image = 'listingPreview/'. $listing->id;
             $listing->save();
+            return MyResponse::generateJson(
+                ResponseStatus::OK,
+                null,
+                ErrorCode::OK,
+                ResponseStatusCode::OK);
         } else {
             return MyResponse::generateJson(
                 ResponseStatus::FAIL,
@@ -139,6 +153,61 @@ class ListingController extends Controller
         }
     }
 
+    public function updateListing(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'state_id' => 'required|string',
+            'id' => 'required|int',
+            'type_id' => 'required|int',
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'price' => 'required|int',
+        ]);
+
+        if ($validator->fails()) {
+            return MyResponse::generateJson(
+                ResponseStatus::VALIDATION_FAIL,
+                $validator->errors(),
+                ErrorCode::FAIL,
+                ResponseStatusCode::FAIL);
+        }
+        $listing = Listing::find($request->id);
+
+        if ($request->hasFile('image')) {
+            $listing->image = "listingPreview/".$request->id;
+            $image = $request->file("image");
+            Storage::disk('listings')->put($request['id'].'.jpg', File::get($image));
+            $requestData['image'] = 'avatar/'.$request['id'];
+        }
+        $listing->state_id = $request->state_id;
+        $listing->type_id = $request->type_id;
+        $listing->title = $request->title;
+        $listing->description = $request->description;
+        $listing->price = $request->price;
+        $listing->save();
+        return MyResponse::generateJson(
+            ResponseStatus::OK,
+            null,
+            ErrorCode::OK,
+            ResponseStatusCode::OK);
+    }
+
+
+    public function deleteListing(Request $request) {
+        $listing = Listing::find($request->id);
+        if ($listing == null) {
+            return MyResponse::generateJson(
+                ResponseStatus::NO_DATA_FOUND,
+                null,
+                ErrorCode::NO_DATA_FOUND,
+                ResponseStatusCode::FAIL);
+        }
+         Listing::where('id',$request->id)->delete();
+        return MyResponse::generateJson(
+            ResponseStatus::OK,
+            null,
+            ErrorCode::OK,
+            ResponseStatusCode::OK);
+    }
 
     public function distanceBetween($from,$to) {
         $r = 6371e3;

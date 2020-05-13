@@ -10,7 +10,6 @@ class MyResponse
 {
     public static function
     generateJson($status, $data, $error_code, $status_code){
-        sleep(1.6);
         return response()->json([
             'status' => $status,
             'data' => $data,

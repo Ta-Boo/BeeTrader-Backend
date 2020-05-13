@@ -81,6 +81,11 @@ class UserController extends  Controller {
             $requestData['image'] = 'avatar/'.$request['id'];
         }
         User::where('id',$request->id)->update($requestData);
+        if($request->phone_number == "") {
+            $user = User::find($request->id);
+            $user->phone_number = null;
+            $user->save();
+        }
     }
 
 

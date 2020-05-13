@@ -47,7 +47,7 @@ class AuthController extends Controller
             //todo: return error message
 
             return MyResponse::generateJson(
-                ResponseStatus::FAIL,
+                $e->getMessage(),
                 null,
                 ErrorCode::FAIL,
                 ResponseStatusCode::FAIL

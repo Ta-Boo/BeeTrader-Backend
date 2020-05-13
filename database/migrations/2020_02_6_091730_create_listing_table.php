@@ -23,6 +23,7 @@ class CreateListingTable extends Migration
             $table->string('description', 2255);
             $table->string('image', 255)->nullable();
             $table->unsignedInteger('price');
+            $table->unsignedInteger('seen');
 
             $table->foreign('user_id')
                 ->references('id')
